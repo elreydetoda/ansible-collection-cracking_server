@@ -1,0 +1,41 @@
+---
+# https://github.com/geerlingguy/ansible-collection-php_roles/blob/dfb2f43dc25b6b5eec4b92fc1409ddd154e3d2ff/.travis.yml
+language: python
+services: docker
+
+env:
+  global:
+    - COLLECTION_NAMESPACE: 'elreydetoda'
+    - COLLECTION_NAME: 'cracking_server'
+  matrix:
+    - DISTRO: centos8
+      PYTHON_INTERPRETER: /usr/bin/python3
+    - DISTRO: ubuntu2004
+      PYTHON_INTERPRETER: /usr/bin/python3
+
+install:
+  # Install Ansible.
+  - pip install --upgrade pip
+  - pip install pipenv
+  - pipenv --bare install -d --deploy
+
+before_script:
+  # Move the collection into the required path to make ansible-test work.
+  - cd ../
+  - mkdir -p ansible_collections/$COLLECTION_NAMESPACE
+  # found on this run: https://travis-ci.com/github/elreydetoda/ansible_virtualization/jobs/495977497
+  - mv "${TRAVIS_REPO_SLUG##*/}" ansible_collections/$COLLECTION_NAMESPACE/$COLLECTION_NAME
+  - cd ansible_collections/$COLLECTION_NAMESPACE/$COLLECTION_NAME
+
+script:
+  # Run tests.
+  - echo "skip for now..."
+  # - ansible-test integration --color --docker geerlingguy/docker-$DISTRO-ansible:latest --python-interpreter $PYTHON_INTERPRETER
+
+deploy:
+  provider: script
+  script: ansible-playbook -i 'localhost,' ci/deploy-playbook.yml -e "collection_name=$COLLECTION_NAME" -e "namespace=$COLLECTION_NAMESPACE" -e "tag=$TRAVIS_TAG"
+  'on':
+    tags: true
+    condition: $DISTRO = centos8
+
