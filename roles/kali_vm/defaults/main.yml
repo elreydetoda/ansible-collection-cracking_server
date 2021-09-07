@@ -1,0 +1,4 @@
+---
+# defaults file for kali_vm
+for_root_user: true
+kali_vm_template: 'Vagrantfile.j2'

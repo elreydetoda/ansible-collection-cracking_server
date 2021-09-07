@@ -1,0 +1,98 @@
+---
+# tasks file for pcie_passthrough
+# apt install -y pciutils findutils grub2-common initramfs-tools
+# pciutils - lspci
+# findutils - xargs
+
+- name: ensure facts directory exists
+  ansible.builtin.file:
+    path: "/etc/ansible/facts.d"
+    state: directory
+    owner: "root"
+    group: "root"
+  become: true
+
+- name: getting custom fact information
+  ansible.builtin.shell:
+    cmd: |
+      (
+        printf '{"pci_devices":[' &&
+        lspci -nd "{{gpu_hw_id_prefix}}:" |
+          awk '{print $3}' |
+          xargs -n1 printf '"%s",' &&
+        printf '],'
+        printf '"pci_lanes":[' &&
+        lspci -nd "{{gpu_hw_id_prefix}}:" |
+          awk '{print $1}' |
+          tr '.' ':' |
+          xargs -n1 printf '"%s",' &&
+        printf ']}'
+      )
+    creates: /etc/ansible/facts.d/gpus.fact
+  register: gpu_ids
+
+- name: setup custom facts for GPUs
+  ansible.builtin.copy:
+    dest: "/etc/ansible/facts.d/gpus.fact"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+    content: |
+      {{ gpu_ids.stdout | regex_replace('(^\"|\"$|,\\])') }}
+  become: true
+  when: ansible_local['gpus']['pci_devices'] is undefined
+
+- name: reload facts with new gpu info
+  ansible.builtin.setup:
+    filter: ansible_local
+  when: ansible_local['gpus']['pci_devices'] is undefined
+
+- name: enabling iommu
+  lineinfile:
+    path: '{{ grub_config }}'
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: "GRUB_CMDLINE_LINUX_DEFAULT=\"{{ enable_iommu_str }} vfio-pci.ids={{ ansible_local['gpus']['pci_devices'] | join(',') | default(omit) }}\""
+    backup: yes
+    state: present
+  become: true
+  register: enabled_iommu
+
+- name: reload grub
+  command:
+    cmd: update-grub
+  become: true
+  when: enabled_iommu.changed
+
+- name: reboot to reload iommu for cpu
+  reboot:
+    reboot_timeout: 600
+  become: true
+  when: enabled_iommu.changed
+
+- name: adding vfio kernel modules
+  copy:
+    content: |
+      # enabling vfio for GPU's for pcie passthrough
+      vfio
+      vfio_iommu_type 1
+      vfio_pci
+      vfio_virqfd
+
+    dest: '/etc/modules-load.d/vfio.conf'
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  register: vfio_modules
+
+- name: reload modules
+  command:
+    cmd: update-initramfs -u
+  become: true
+  when: vfio_modules.changed
+
+- name: reboot to reload iommu for cpu
+  reboot:
+    reboot_timeout: 600
+  become: true
+  when: vfio_modules.changed

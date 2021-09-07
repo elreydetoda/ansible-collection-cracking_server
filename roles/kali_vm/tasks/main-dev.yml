@@ -1,0 +1,41 @@
+---
+# tasks file for kali_vm
+# all done for root user, because PCI passthrough
+
+- name: ensure kali vm directory exists
+  ansible.builtin.file:
+    path: '{{ item }}/'
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: "0600"
+  loop:
+    - '{{ kali_vm_dir }}'
+  become: true
+
+- name: copying Vagrantfile over
+  ansible.builtin.template:
+    backup: true
+    src: '{{ kali_vm_template }}'
+    dest: '{{ kali_vm_dir }}/Vagrantfile'
+  become: true
+
+- name: starting up first time/pulling box ( this will take a while )
+  ansible.builtin.command:
+    cmd: vagrant up --machine-readable --no-tty
+    chdir: '{{ kali_vm_dir }}'
+  become: true
+  register: result
+  changed_when: 
+    - '"Creating image" in result.stdout'
+    - result.rc == 0
+
+- name: provisioning vm
+  ansible.builtin.command:
+    cmd: vagrant provision --provision-with initial-prov --machine-readable --no-tty
+    chdir: '{{ kali_vm_dir }}'
+  become: true
+  register: result
+  changed_when: 
+    - '"Exiting, already connected" not in result.stdout'
+    - result.rc == 0

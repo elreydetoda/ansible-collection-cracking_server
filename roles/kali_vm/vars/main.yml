@@ -1,0 +1,4 @@
+---
+# vars file for kali_vm
+
+kali_vm_dir: /root/kali_vm

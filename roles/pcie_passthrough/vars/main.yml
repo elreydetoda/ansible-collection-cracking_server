@@ -1,0 +1,6 @@
+---
+# vars file for pcie_passthrough
+grub_config: /etc/default/grub
+enable_iommu_str: "intel_iommu=on"
+# nvidia's gpu hardware id
+gpu_hw_id_prefix: '10de'

@@ -1,0 +1,3 @@
+---
+# defaults file for hashcat
+hashcat_dir: /opt/hashcat

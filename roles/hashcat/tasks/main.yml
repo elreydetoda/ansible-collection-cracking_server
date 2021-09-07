@@ -1,0 +1,64 @@
+---
+# tasks file for hashcat
+# apt install make gcc g++ --no-install-recommends -y
+# python: github3.py
+- name: getting hashcat latest release
+  github_release:
+    repo: hashcat
+    user: hashcat
+    action: latest_release
+  register: hashcat_version
+  when: hashcat_version_override is undefined
+
+- name: setting fact for latest hashcat version
+  set_fact:
+    hashcat_latest_version: '{{ hashcat_version_override | default(hashcat_version.tag) }}'
+    # DEV: checking to see how git handles version changing
+    # hashcat_latest_version: '{{ hashcat_dev_ver }}'
+
+- name: handling errors with getting version
+  block:
+
+    - name: getting currently checked out version
+      command:
+        cmd: git describe --tags
+        chdir: '{{ hashcat_dir }}'
+      register: hashcat_current_version
+      changed_when: False
+      become: yes
+
+  rescue:
+
+    - name: Hashcat hasn't been pulled yet, so setting empty value
+      command: echo ''
+      register: hashcat_current_version
+      changed_when: False
+
+    - name: setting not created hashcat dir fact
+      set_fact:
+        hashcat_dir_existance: false
+
+- name: cleaning hashcat
+  command:
+    cmd: make clean
+    chdir: '{{ hashcat_dir }}'
+  when:
+    - hashcat_latest_version != hashcat_current_version.stdout
+    - hashcat_dir_existance is undefined
+  register: hashcat_changed
+  become: yes
+
+- name: cloning latest hashcat version
+  git:
+    dest: '{{ hashcat_dir }}'
+    repo: https://github.com/hashcat/hashcat.git
+    version: '{{ hashcat_latest_version }}'
+  when: hashcat_changed.changed or hashcat_dir_existance is defined
+  become: yes
+
+- name: building hashcat
+  command:
+    cmd: make
+    chdir: '{{ hashcat_dir }}'
+    creates: '{{ hashcat_dir }}/hashcat'
+  become: yes
