@@ -20,6 +20,17 @@
     dest: '{{ kali_vm_dir }}/Vagrantfile'
   become: true
 
+- name: pulling/updating box ( this will take a while )
+  ansible.builtin.command:
+    cmd: vagrant box update --machine-readable --no-tty
+    chdir: '{{ kali_vm_dir }}'
+  become: true
+  register: result
+  when: always_update
+  changed_when: 
+    - '"is running the latest version" not in result.stdout'
+    - result.rc == 0
+
 - name: starting up first time/pulling box ( this will take a while )
   ansible.builtin.command:
     cmd: vagrant up --machine-readable --no-tty
