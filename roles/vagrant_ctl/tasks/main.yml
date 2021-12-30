@@ -1,0 +1,27 @@
+---
+# tasks file for vagrant_ctl
+- name: checking for stopping
+  block:
+
+    - name: stopping vm
+      ansible.builtin.command:
+        chdir: '{{ vagrant_vm_dir }}'
+        cmd: vagrant halt --machine-readable --no-tty
+      register: cmd_output
+      changed_when: "'Halting domain...' in cmd_output.stdout"
+      become: '{{ for_root_user }}'
+
+  when: vagrant_action == 'stop'
+
+- name: checking for starting
+  block:
+
+    - name: starting vm
+      ansible.builtin.command:
+        chdir: '{{ vagrant_vm_dir }}'
+        cmd: vagrant up --machine-readable --no-tty
+      register: cmd_output
+      changed_when: "'Starting domain.' in cmd_output.stdout"
+      become: '{{ for_root_user }}'
+
+  when: vagrant_action == 'start'

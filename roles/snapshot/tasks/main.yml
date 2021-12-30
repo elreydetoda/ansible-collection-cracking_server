@@ -1,0 +1,33 @@
+---
+# tasks file for snapshot
+- name: listing snapshots to get current snapshots
+  ansible.builtin.command:
+    cmd: 'virsh snapshot-list --domain "{{ vm_name }}"'
+  changed_when: false
+  register: vm_list
+  become: '{{ for_root_user }}'
+
+- name: snapshotting vm
+  block:
+
+    - name: prep'ing for snapshot
+      ansible.builtin.include_role:
+        name: elreydetoda.cracking_server.vagrant_ctl
+      vars:
+        vagrant_action: 'stop'
+
+    - name: snapshot vm
+      ansible.builtin.command:
+        cmd: 'virsh snapshot-create-as --domain "{{ vm_name }}" --name "{{ vm_snapshot_name }}"'
+      register: cmd_output
+      changed_when: "'created' in cmd_output.stdout"
+      become: '{{ for_root_user }}'
+
+  when: "vm_snapshot_name not in vm_list.stdout"
+
+
+- name: prep'ing for snapshot
+  ansible.builtin.include_role:
+    name: elreydetoda.cracking_server.vagrant_ctl
+  vars:
+    vagrant_action: 'start'

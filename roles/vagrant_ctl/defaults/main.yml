@@ -1,0 +1,4 @@
+---
+# defaults file for vagrant_ctl
+vagrant_vm_dir: /root/kali_vm
+for_root_user: true
