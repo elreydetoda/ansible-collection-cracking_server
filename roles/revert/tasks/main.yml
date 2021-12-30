@@ -7,10 +7,21 @@
   register: vm_list
   become: '{{ for_root_user }}'
 
+- name: setting last snapshot variable
+  ansible.builtin.set_fact:
+    last_snapshot: '{{ (vm_list.stdout_lines | last | split(" ")).1 }}'
+
 - name: reverting kali vm to last snapshot
   ansible.builtin.command:
-    cmd: 'virsh snapshot-revert --domain "{{ vm_name }}" --snapshotname "{{ (vm_list.stdout_lines | last | split(" ")).1 }}"'
+    cmd: 'virsh snapshot-revert --domain "{{ vm_name }}" --snapshotname "{{ last_snapshot }}"'
   changed_when: false
+  become: '{{ for_root_user }}'
+
+- name: deleting last snapshot
+  ansible.builtin.command:
+    cmd: 'virsh snapshot-delete --domain "{{ vm_name }}" --snapshotname "{{ last_snapshot }}"'
+  register: cmd_output
+  changed_when: '"deleted" in cmd_output.stdout'
   become: '{{ for_root_user }}'
 
 - name: getting kali back up
