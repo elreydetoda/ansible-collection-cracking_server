@@ -1,0 +1,27 @@
+---
+# tasks file for purge
+- name: getting current snapshots for auto purging
+  ansible.builtin.command:
+    cmd: 'virsh snapshot-list --domain "{{ vm_name }}"'
+  changed_when: false
+  register: vm_list
+  become: '{{ for_root_user }}'
+
+- name: removing uncessary snapshots
+  block:
+
+    - name: removing snapshots
+      ansible.builtin.command:
+        cmd: 'virsh snapshot-delete --domain "{{ vm_name }}" --snapshotname "{{ (item | split(" ")).1 | default(item) }}"'
+      when:
+        # used to skip the headers
+        - current_item >= header_amount
+        # used to prevent deleting the most recent number of max_snapshots
+        - current_item < ((vm_list.stdout_lines | length) - max_snapshots)
+        # used to keep around a particular snapshot by checking if name in item
+        # - '"before_2021-10-04_update" not in item'
+      loop: '{{ vm_list.stdout_lines }}'
+      loop_control:
+        index_var: current_item
+      become: '{{ for_root_user }}'
+  when: (( vm_list.stdout_lines | length ) - header_amount) > max_snapshots
