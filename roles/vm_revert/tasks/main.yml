@@ -14,7 +14,8 @@
 - name: reverting kali vm to last snapshot
   ansible.builtin.command:
     cmd: 'virsh snapshot-revert --domain "{{ vm_name }}" --snapshotname "{{ last_snapshot }}"'
-  changed_when: false
+  register: cmd_output
+  changed_when: cmd_output.rc == 0
   become: '{{ for_root_user }}'
 
 - name: deleting last snapshot
