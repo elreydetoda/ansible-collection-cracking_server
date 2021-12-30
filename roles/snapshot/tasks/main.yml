@@ -26,7 +26,7 @@
   when: "vm_snapshot_name not in vm_list.stdout"
 
 
-- name: prep'ing for snapshot
+- name: starting after snapshot
   ansible.builtin.include_role:
     name: elreydetoda.cracking_server.vagrant_ctl
   vars:
