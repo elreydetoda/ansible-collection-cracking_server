@@ -1,0 +1,20 @@
+---
+# tasks file for revert
+- name: getting current snapshots for revert
+  ansible.builtin.command:
+    cmd: 'virsh snapshot-list --domain "{{ vm_name }}"'
+  changed_when: false
+  register: vm_list
+  become: '{{ for_root_user }}'
+
+- name: reverting kali vm to last snapshot
+  ansible.builtin.command:
+    cmd: 'virsh snapshot-revert --domain "{{ vm_name }}" --snapshotname "{{ (vm_list.stdout_lines | last | split(" ")).1 }}"'
+  changed_when: false
+  become: '{{ for_root_user }}'
+
+- name: getting kali back up
+  ansible.builtin.include_role:
+    name: elreydetoda.cracking_server.vagrant_ctl
+  vars:
+    vagrant_action: 'start'
