@@ -24,7 +24,7 @@
         cmd: git describe --tags
         chdir: '{{ hashcat_dir }}'
       register: hashcat_current_version
-      changed_when: False
+      changed_when: false
       become: yes
 
   rescue:
@@ -32,7 +32,7 @@
     - name: Hashcat hasn't been pulled yet, so setting empty value
       command: echo ''
       register: hashcat_current_version
-      changed_when: False
+      changed_when: false
 
     - name: setting not created hashcat dir fact
       set_fact:
