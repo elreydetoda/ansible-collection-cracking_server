@@ -1,3 +1,4 @@
 ---
 # defaults file for revert
 for_root_user: true
+snapshot_regex_test: 'before_\d{4}-\d{2}-\d{2}'

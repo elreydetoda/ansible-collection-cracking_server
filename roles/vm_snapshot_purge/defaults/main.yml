@@ -5,6 +5,7 @@ vm_snapshot_name: '{{ vm_snapshot_prefix }}{{ ansible_date_time.date }}_update'
 for_root_user: true
 max_snapshots: 5
 header_amount: 2
+snapshot_regex_test: 'before_\d{4}-\d{2}-\d{2}'
 # current headers are:
 #   " Name                       Creation Time               State",
 #   "-----------------------------------------------------------------",
