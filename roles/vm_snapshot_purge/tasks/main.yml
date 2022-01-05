@@ -19,7 +19,7 @@
         # used to prevent deleting the most recent number of max_snapshots
         - current_item < ((vm_list.stdout_lines | length) - max_snapshots)
         # used to only allow snapshots with a specific prefix to be deleted
-        - current_item | map('regex_replace', '^ ', '') | select('match', snapshot_regex_test)
+        - current_item | trim | select('match', snapshot_regex_test)
         # used to keep around a particular snapshot by checking if name in item
         # - '"before_2021-10-04_update" not in item'
       loop: '{{ vm_list.stdout_lines }}'
