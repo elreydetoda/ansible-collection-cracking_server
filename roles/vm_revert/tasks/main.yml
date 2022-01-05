@@ -9,7 +9,7 @@
 
 - name: setting last snapshot variable
   ansible.builtin.set_fact:
-    last_snapshot: "{{ (vm_list.stdout_lines | map('regex_replace', '^ ', '') | select('match', snapshot_regex_test) | last | split(' ')).1 }}"
+    last_snapshot: "{{ (vm_list.stdout_lines | map('regex_replace', '^ ', '') | select('match', snapshot_regex_test) | last | split(' ')).0 }}"
 
 - name: reverting kali vm to last snapshot
   ansible.builtin.command:
