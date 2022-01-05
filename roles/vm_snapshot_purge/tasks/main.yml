@@ -12,17 +12,13 @@
 
     - name: removing snapshots
       ansible.builtin.command:
-        cmd: 'virsh snapshot-delete --domain "{{ vm_name }}" --snapshotname "{{ (item | split(" ")).1 | default(item) }}"'
+        cmd: 'virsh snapshot-delete --domain "{{ vm_name }}" --snapshotname "{{ (item | split(" ")).0 | default(item) }}"'
       when:
-        # used to skip the headers
-        - current_item >= header_amount
         # used to prevent deleting the most recent number of max_snapshots
         - current_item < ((vm_list.stdout_lines | length) - max_snapshots)
-        # used to only allow snapshots with a specific prefix to be deleted
-        - current_item | trim | select('match', snapshot_regex_test)
         # used to keep around a particular snapshot by checking if name in item
         # - '"before_2021-10-04_update" not in item'
-      loop: '{{ vm_list.stdout_lines }}'
+      loop: "{{ vm_list.stdout_lines | map('regex_replace', '^ ', '') | select('match', snapshot_regex_test) }}"
       loop_control:
         index_var: current_item
       become: '{{ for_root_user }}'
