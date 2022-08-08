@@ -53,9 +53,9 @@
     - name: Updating VM base box
       ansible.builtin.command:
         chdir: '{{ vagrant_vm_dir }}'
-        cmd: vagrant up --machine-readable --no-tty
+        cmd: vagrant box update --machine-readable --no-tty
       register: cmd_output
-      changed_when: "'Starting domain.' in cmd_output.stdout"
+      changed_when: "'Updating' in cmd_output.stdout"
       become: '{{ for_root_user }}'
 
-  when: vagrant_action == 'start'
+  when: vagrant_action == 'update'
