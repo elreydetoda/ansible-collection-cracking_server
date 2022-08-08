@@ -26,7 +26,7 @@
 
   when: vagrant_action == 'start'
   
-  - name: Re-creating vm
+- name: Re-creating vm
   block:
 
     - name: destroying VM
@@ -47,7 +47,7 @@
 
   when: vagrant_action == 'recreate'
   
-  - name: check for update
+- name: check for update
   block:
 
     - name: Updating VM base box
