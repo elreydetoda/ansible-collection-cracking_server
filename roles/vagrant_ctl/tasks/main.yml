@@ -25,3 +25,24 @@
       become: '{{ for_root_user }}'
 
   when: vagrant_action == 'start'
+  
+  - name: Re-creating vm
+  block:
+
+    - name: destroying VM
+      ansible.builtin.command:
+        chdir: '{{ vagrant_vm_dir }}'
+        cmd: vagrant destroy --force --machine-readable --no-tty
+      register: cmd_output
+      changed_when: "'Removing domain...' in cmd_output.stdout"
+      become: '{{ for_root_user }}'
+
+    - name: starting vm
+      ansible.builtin.command:
+        chdir: '{{ vagrant_vm_dir }}'
+        cmd: vagrant up --machine-readable --no-tty
+      register: cmd_output
+      changed_when: "'Starting domain.' in cmd_output.stdout"
+      become: '{{ for_root_user }}'
+
+  when: vagrant_action == 'recreate'
